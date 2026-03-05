@@ -1,1 +1,1 @@
-wp nbu parse-souvenir --pages=1 --per-page=5 --limit=1;
+wp nbu parse-souvenir --pages=1 --per-page=5 --limit=5;

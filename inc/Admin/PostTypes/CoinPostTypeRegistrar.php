@@ -8,6 +8,7 @@ class CoinPostTypeRegistrar
     {
         add_action('init', [$this, 'registerPostType']);
         add_action('init', [$this, 'registerCoinTaxonomies']);
+        add_action('init', [$this, 'seedFixedTerms'], 20);
     }
 
     public function registerPostType(): void
@@ -38,6 +39,9 @@ class CoinPostTypeRegistrar
             'publicly_queryable'  => true,
             'taxonomies'          => ['category'],
             'show_in_rest'        => true,
+            'show_in_graphql'     => true,
+            'graphql_single_name' => 'coin',
+            'graphql_plural_name' => 'coins',
             'capability_type'     => 'post',
             'rewrite'             => ['with_front' => true],
         ]);
@@ -47,48 +51,109 @@ class CoinPostTypeRegistrar
     {
         $taxonomies = [
             'coin_denomination' => [
-                'label' => 'Denomination',
-                'hierarchical' => false,
+                'label'               => 'Denomination',
+                'hierarchical'        => false,
+                'graphql_single_name' => 'coinDenomination',
+                'graphql_plural_name' => 'coinDenominations',
             ],
             'coin_quality' => [
-                'label' => 'Quality',
-                'hierarchical' => false,
+                'label'               => 'Quality',
+                'hierarchical'        => false,
+                'graphql_single_name' => 'coinQuality',
+                'graphql_plural_name' => 'coinQualities',
             ],
             'coin_material' => [
-                'label' => 'Material',
-                'hierarchical' => false,
+                'label'               => 'Material',
+                'hierarchical'        => false,
+                'graphql_single_name' => 'coinMaterial',
+                'graphql_plural_name' => 'coinMaterials',
             ],
             'coin_series' => [
-                'label' => 'Series',
-                'hierarchical' => false,
+                'label'               => 'Series',
+                'hierarchical'        => false,
+                'graphql_single_name' => 'coinSeries',
+                'graphql_plural_name' => 'coinSeriesList',
             ],
             'coin_edge' => [
-                'label' => 'Edge',
-                'hierarchical' => false,
+                'label'               => 'Edge',
+                'hierarchical'        => false,
+                'graphql_single_name' => 'coinEdge',
+                'graphql_plural_name' => 'coinEdges',
             ],
             'coin_diameter' => [
-                'label' => 'Diameter',
-                'hierarchical' => false,
+                'label'               => 'Diameter',
+                'hierarchical'        => false,
+                'graphql_single_name' => 'coinDiameter',
+                'graphql_plural_name' => 'coinDiameters',
             ],
             'coin_mintage_declared' => [
-                'label' => 'Mintage (declared)',
-                'hierarchical' => false,
+                'label'               => 'Mintage (declared)',
+                'hierarchical'        => false,
+                'graphql_single_name' => 'coinMintageDeclared',
+                'graphql_plural_name' => 'coinMintagesDeclared',
             ],
             'coin_mintage_actual' => [
-                'label' => 'Mintage (actual)',
-                'hierarchical' => false,
+                'label'               => 'Mintage (actual)',
+                'hierarchical'        => false,
+                'graphql_single_name' => 'coinMintageActual',
+                'graphql_plural_name' => 'coinMintagesActual',
+            ],
+            'coin_color' => [
+                'label'               => 'Color',
+                'hierarchical'        => false,
+                'graphql_single_name' => 'coinColor',
+                'graphql_plural_name' => 'coinColors',
+            ],
+            'coin_packaging' => [
+                'label'               => 'Packaging',
+                'hierarchical'        => false,
+                'graphql_single_name' => 'coinPackaging',
+                'graphql_plural_name' => 'coinPackagings',
+            ],
+            'coin_nbu_category' => [
+                'label'               => 'NBU Category',
+                'hierarchical'        => true,
+                'graphql_single_name' => 'coinNbuCategory',
+                'graphql_plural_name' => 'coinNbuCategories',
             ],
         ];
 
         foreach ($taxonomies as $slug => $config) {
             register_taxonomy($slug, ['coins'], [
-                'label'             => $config['label'],
-                'public'            => true,
-                'hierarchical'      => $config['hierarchical'],
-                'show_ui'           => true,
-                'show_in_rest'      => true,
-                'rewrite'           => ['slug' => $slug],
+                'label'               => $config['label'],
+                'public'              => true,
+                'hierarchical'        => $config['hierarchical'],
+                'show_ui'             => true,
+                'show_in_rest'        => true,
+                'show_in_graphql'     => true,
+                'graphql_single_name' => $config['graphql_single_name'],
+                'graphql_plural_name' => $config['graphql_plural_name'],
+                'rewrite'             => ['slug' => $slug],
             ]);
+        }
+    }
+
+    public function seedFixedTerms(): void
+    {
+        $terms = [
+            'coin_color' => [
+                'Кольорова',
+                'Некольорова',
+            ],
+            'coin_packaging' => [
+                'Без пакування',
+                'В сувенірному пакуванні',
+                'Набір',
+                'Ролик',
+            ],
+        ];
+
+        foreach ($terms as $taxonomy => $labels) {
+            foreach ($labels as $label) {
+                if (!term_exists($label, $taxonomy)) {
+                    wp_insert_term($label, $taxonomy);
+                }
+            }
         }
     }
 }

@@ -25,8 +25,11 @@ class DesignerPostTypeRegistrar
             'show_ui'       => true,
             'menu_icon'     => 'dashicons-admin-users',
             'show_in_menu'  => true,
-            'show_in_rest'  => true,
-            'has_archive'   => false,
+            'show_in_rest'        => true,
+            'show_in_graphql'     => true,
+            'graphql_single_name' => 'designer',
+            'graphql_plural_name' => 'designers',
+            'has_archive'         => false,
             'rewrite'       => ['slug' => 'designers', 'with_front' => true],
         ]);
     }

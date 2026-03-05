@@ -13,6 +13,7 @@ class App
 
         $this->bootAdmin();
         $this->bootRestApi();
+        $this->bootGraphQL();
     }
 
     private function bootAdmin(): void
@@ -35,5 +36,14 @@ class App
     private function bootRestApi(): void
     {
         new Rest\ApiRouter();
+    }
+
+    private function bootGraphQL(): void
+    {
+        if (!function_exists('register_graphql_field')) {
+            return;
+        }
+
+        (new GraphQL\GraphQLRegistrar())->boot();
     }
 }

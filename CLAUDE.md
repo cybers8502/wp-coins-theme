@@ -16,13 +16,13 @@ wp nbu parse-souvenir --pages=1 --per-page=5 --limit=1
 wp nbu parse-souvenir --pages=1 --dry-run   # preview without writing to DB
 ```
 
-The `FetchNbuDataCommand` is only registered when `WP_CLI` is defined (see `functions.php`).
+The `FetchNbuDataCommand` is only registered when `WP_CLI` is defined (see `functions.php`). No manual `require_once` needed — autoloader handles it.
 
 ## Architecture
 
 **Namespace:** `Coins\` → maps to `inc/` via PSR-4 (composer.json).
 
-**Bootstrap:** `functions.php` manually requires all class files (no autoloader at runtime — composer autoload is not loaded via `vendor/autoload.php`), then calls `(new \Coins\App())->boot()`.
+**Bootstrap:** `functions.php` loads `vendor/autoload.php` (PSR-4, generated via `composer dump-autoload`), then calls `(new \Coins\App())->boot()`.
 
 **`App::boot()` wires up:**
 - `Assets\AssetManager` — enqueue scripts/styles
@@ -39,7 +39,8 @@ The `FetchNbuDataCommand` is only registered when `WP_CLI` is defined (see `func
 
 **CPT `coins`** with taxonomies:
 - `coin_denomination`, `coin_quality`, `coin_material`, `coin_series`, `coin_edge`, `coin_diameter`, `coin_mintage_declared`, `coin_mintage_actual`
-- `coin_nbu_category` (hierarchical, registered in `FetchNbuDataCommand`)
+- `coin_color`, `coin_packaging`
+- `coin_nbu_category` (hierarchical)
 
 **ACF fields on `coins`:** `issue_date`, `diameter_mm`, `quality`, `edge`, `designers` (relationship to `designer` CPT), `mintage_declared`, `mintage_actual`, `booklet_url`, `description_html`, `images_gallery`
 
@@ -49,14 +50,14 @@ The `FetchNbuDataCommand` is only registered when `WP_CLI` is defined (see `func
 
 Register routes inside `ApiRouter::registerRoutes()` using `register_rest_route()`. The method is currently empty — all new endpoints go here.
 
-If a new controller class is needed, add it to `inc/Rest/Controllers/` under namespace `Coins\Rest\Controllers\` and require it manually in `functions.php`.
+If a new controller class is needed, add it to `inc/Rest/Controllers/` under namespace `Coins\Rest\Controllers\` — autoloader picks it up automatically.
 
 ## Adding New Post Types or ACF Fields
 
 1. Create a registrar in `inc/Admin/PostTypes/` extending the pattern of existing registrars (implement `boot()` with `add_action('init', ...)`).
 2. Create an ACF manager in `inc/Admin/ACFFieldsManager/` using `acf_add_local_field_group()` on `acf/init`.
 3. Instantiate both in `App::bootAdmin()`.
-4. Add `require_once` calls for both files in `functions.php`.
+4. No `require_once` needed — PSR-4 autoloader handles it.
 
 ## Plugin Dependencies
 

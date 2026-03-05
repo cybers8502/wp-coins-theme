@@ -50,6 +50,7 @@ class FetchNbuDataCommand
 
     const BASE = 'https://bank.gov.ua';
     const LIST_URL  = '/ua/uah/numismatic-products/souvenier-coins';
+    const AJAX_URL  = '/ua/component/source/searchSouvenierCoinResult';
 
     // Налаштування (під себе)
     protected $post_type = 'coins'; // CPT
@@ -172,38 +173,26 @@ class FetchNbuDataCommand
         WP_CLI::success("Готово. Опрацьовано елементів: $processed");
     }
 
-    protected function configure(): void
-    {
-        $this
-            ->setName('nbu:fetch-coins')
-            ->setDescription('Fetch souvenir coins from NBU')
-            ->addOption(
-                'limit',
-                null,
-                \Symfony\Component\Console\Input\InputOption::VALUE_OPTIONAL,
-                'Limit number of records',
-                null
-            );
-    }
-
     /** ----------------------- HTTP ----------------------- */
 
     protected function fetch_ajax_html(int $page, int $perPage) {
-        $url = add_query_arg([
-            'page'    => $page,
-            'perPage' => $perPage,
-            'search'  => '',
-            'from'    => '',
-            'to'      => '',
-            'code'    => '',
-        ], self::BASE . self::LIST_URL );
-
-        $resp = wp_remote_get($url, [
+        // НБУ використовує AJAX POST на окремий endpoint для пагінації.
+        // GET-запит до LIST_URL завжди повертає першу сторінку незалежно від ?page=N.
+        $resp = wp_remote_post(self::BASE . self::AJAX_URL, [
             'timeout' => 20,
             'headers' => [
-                'accept'     => 'text/html, */*;q=0.1',
-                'user-agent' => 'WP-CLI Coin Parser/1.0',
-                'referer'    => self::BASE . self::LIST_URL,
+                'Content-Type' => 'application/x-www-form-urlencoded',
+                'Accept'       => 'text/html, */*;q=0.1',
+                'User-Agent'   => 'WP-CLI Coin Parser/1.0',
+                'Referer'      => self::BASE . self::LIST_URL,
+            ],
+            'body' => [
+                'page'    => $page,
+                'perPage' => $perPage,
+                'search'  => '',
+                'from'    => '',
+                'to'      => '',
+                'code'    => '',
             ],
         ]);
 
@@ -387,12 +376,16 @@ class FetchNbuDataCommand
         $this->assign_taxonomy_single($post_id, 'coin_material',     $item['material'] ?? null);
         $this->assign_taxonomy_single($post_id, 'coin_quality',      $item['quality'] ?? null);
         $this->assign_taxonomy_single($post_id, 'coin_edge',         $item['edge'] ?? null);
-        $this->assign_taxonomy_single($post_id, 'coin_diameter',         $item['diameter'] ?? null);
+        $this->assign_taxonomy_single($post_id, 'coin_diameter',         $item['diameter_mm'] ?? null);
         $this->assign_taxonomy_single($post_id, 'coin_mintage_declared', $item['mintage_declared'] ?? null);
         $this->assign_taxonomy_single($post_id, 'coin_mintage_actual',   $item['mintage_actual'] ?? null);
 
         // NBU category (ієрархія або просто строка)
         $this->assign_taxonomy_hierarchical($post_id, 'coin_nbu_category', $item['nbu_category'] ?? null);
+
+        // Пакування — визначаємо за назвою монети
+        $packaging = $this->detect_packaging($item['title'] ?? '');
+        $this->assign_taxonomy_single($post_id, 'coin_packaging', $packaging);
 
         // ✅ 2) Designers -> separate post type
         $designer_names = $this->parse_designers($item['designers'] ?? null);
@@ -436,38 +429,59 @@ class FetchNbuDataCommand
     }
 
     protected function find_existing_post(string $title, ?string $issue_date): ?int {
-        // простий пошук по title + (опційно) meta issue_date
-        $args = [
+        // Шукаємо спочатку за точним заголовком + датою
+        if ($issue_date) {
+            $q = new WP_Query([
+                'post_type'      => $this->post_type,
+                'posts_per_page' => 1,
+                'post_status'    => 'any',
+                'title'          => $title,
+                'fields'         => 'ids',
+                'meta_query'     => [[
+                    'key'   => 'issue_date',
+                    'value' => $issue_date,
+                ]],
+            ]);
+            if (!empty($q->posts)) return (int) $q->posts[0];
+        }
+
+        // Fallback: тільки точний заголовок
+        $q = new WP_Query([
             'post_type'      => $this->post_type,
             'posts_per_page' => 1,
             'post_status'    => 'any',
             'title'          => $title,
             'fields'         => 'ids',
-        ];
-        if ($issue_date) {
-            $args['meta_query'] = [[
-                'key'   => 'issue_date',
-                'value' => $issue_date,
-            ]];
-        }
-        $q = new WP_Query($args);
-        if (!empty($q->posts)) return (int)$q->posts[0];
-
-        // fallback: шукати тільки по заголовку
-        $q = new WP_Query([
-            'post_type'      => $this->post_type,
-            'posts_per_page' => 1,
-            'post_status'    => 'any',
-            's'              => $title,
-            'fields'         => 'ids',
         ]);
-        return !empty($q->posts) ? (int)$q->posts[0] : null;
+        return !empty($q->posts) ? (int) $q->posts[0] : null;
+    }
+
+    protected function find_attachment_by_source_url(string $url): ?int
+    {
+        $q = new \WP_Query([
+            'post_type'      => 'attachment',
+            'post_status'    => 'inherit',
+            'posts_per_page' => 1,
+            'fields'         => 'ids',
+            'meta_query'     => [[
+                'key'   => '_coin_source_url',
+                'value' => $url,
+            ]],
+        ]);
+        return !empty($q->posts) ? (int) $q->posts[0] : null;
     }
 
     protected function download_and_attach_images(array $urls, int $post_id): array {
         $ids = [];
         foreach ($urls as $u) {
-            // media_sideload_image повертає HTML, але через помилку — attachment ID в $_id
+            // Перевірка дублікату — якщо вже завантажено раніше, повторно не качаємо
+            $existing_id = $this->find_attachment_by_source_url($u);
+            if ($existing_id) {
+                WP_CLI::log("  IMG reuse #{$existing_id}: {$u}");
+                $ids[] = $existing_id;
+                continue;
+            }
+
             $tmp = download_url($u, 20);
             if (is_wp_error($tmp)) { WP_CLI::warning("  IMG skip: $u (" . $tmp->get_error_message() . ")"); continue; }
 
@@ -482,6 +496,8 @@ class FetchNbuDataCommand
                 WP_CLI::warning("  IMG attach fail: $u (" . $id->get_error_message() . ")");
                 continue;
             }
+
+            update_post_meta((int) $id, '_coin_source_url', $u);
             $ids[] = (int)$id;
         }
         // унікалізація
@@ -591,6 +607,27 @@ class FetchNbuDataCommand
 
         $term_id = $this->ensure_term($taxonomy, $value);
         if ($term_id) wp_set_post_terms($post_id, [$term_id], $taxonomy, false);
+    }
+
+    protected function detect_packaging(string $title): string
+    {
+        $title_lower = mb_strtolower($title, 'UTF-8');
+
+        if (mb_strpos($title_lower, 'набір') !== false) {
+            return 'Набір';
+        }
+
+        if (mb_strpos($title_lower, 'ролик') !== false) {
+            return 'Ролик';
+        }
+
+        if (mb_strpos($title_lower, 'сувенірному пакованн') !== false
+            || mb_strpos($title_lower, 'сувенірному пакуванн') !== false
+        ) {
+            return 'В сувенірному пакуванні';
+        }
+
+        return 'Без пакування';
     }
 
     protected function assign_taxonomy_hierarchical(int $post_id, string $taxonomy, ?string $path): void

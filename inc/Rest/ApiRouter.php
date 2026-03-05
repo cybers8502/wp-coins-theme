@@ -12,8 +12,36 @@ class ApiRouter
 
     public function registerRoutes(): void
     {
+        $coinController       = new Controllers\CoinController();
         $priceController      = new Controllers\CoinPriceController();
         $collectionController = new Controllers\CoinCollectionController();
+
+        // Coins list
+        register_rest_route('coins/v1', '/coins', [
+            'methods'             => 'GET',
+            'callback'            => [$coinController, 'getList'],
+            'permission_callback' => '__return_true',
+            'args'                => [
+                'page'     => ['default' => 1,    'sanitize_callback' => 'absint'],
+                'per_page' => ['default' => 20,   'sanitize_callback' => 'absint'],
+                'search'   => ['default' => '',   'sanitize_callback' => 'sanitize_text_field'],
+                'orderby'  => ['default' => 'date'],
+                'order'    => ['default' => 'DESC'],
+            ],
+        ]);
+
+        // Single coin
+        register_rest_route('coins/v1', '/coins/(?P<id>\d+)', [
+            'methods'             => 'GET',
+            'callback'            => [$coinController, 'getSingle'],
+            'permission_callback' => '__return_true',
+            'args'                => [
+                'id' => [
+                    'required'          => true,
+                    'validate_callback' => fn($v) => is_numeric($v) && $v > 0,
+                ],
+            ],
+        ]);
 
         register_rest_route('coins/v1', '/coins/(?P<id>\d+)/price-history', [
             'methods'             => 'GET',
@@ -25,6 +53,13 @@ class ApiRouter
                     'validate_callback' => fn($v) => is_numeric($v) && $v > 0,
                 ],
             ],
+        ]);
+
+        // Collection stats
+        register_rest_route('coins/v1', '/collection/stats', [
+            'methods'             => 'GET',
+            'callback'            => [$collectionController, 'getStats'],
+            'permission_callback' => fn() => is_user_logged_in(),
         ]);
 
         // Collection — list & add

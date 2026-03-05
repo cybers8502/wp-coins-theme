@@ -8,6 +8,48 @@ use WP_Error;
 
 class CoinCollectionController
 {
+    // GET /collection/stats
+    public function getStats(WP_REST_Request $request): WP_REST_Response
+    {
+        $user_id = get_current_user_id();
+
+        $query = new \WP_Query([
+            'post_type'      => 'coin_collection',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'meta_query'     => [
+                [
+                    'key'   => 'user_id',
+                    'value' => $user_id,
+                    'type'  => 'NUMERIC',
+                ],
+            ],
+        ]);
+
+        $unique_coins   = 0;
+        $total_quantity = 0;
+        $total_spent    = 0.0;
+
+        foreach ($query->posts as $post_id) {
+            $quantity = (int) get_field('quantity', $post_id);
+            $price    = get_field('purchase_price', $post_id);
+
+            $unique_coins++;
+            $total_quantity += $quantity;
+
+            if ($price !== '' && $price !== false) {
+                $total_spent += (float) $price * $quantity;
+            }
+        }
+
+        return new WP_REST_Response([
+            'unique_coins'   => $unique_coins,
+            'total_quantity' => $total_quantity,
+            'total_spent'    => round($total_spent, 2),
+        ], 200);
+    }
+
     // GET /collection
     public function getCollection(WP_REST_Request $request): WP_REST_Response
     {
