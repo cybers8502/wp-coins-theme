@@ -1,6 +1,6 @@
 <?php
 
-namespace Coins\GraphQL;
+namespace Coins\GraphQL\Fields;
 
 class DesignerFieldsRegistrar
 {
