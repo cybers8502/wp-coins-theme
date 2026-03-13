@@ -45,5 +45,12 @@ class CustomTypesRegistrar
                 'totalSpent'    => ['type' => 'Float'],
             ],
         ]);
+
+        register_graphql_object_type('AddToCollectionPayload', [
+            'description' => 'Result of addToCollection mutation',
+            'fields'      => [
+                'success' => ['type' => 'Boolean'],
+            ],
+        ]);
     }
 }

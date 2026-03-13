@@ -380,12 +380,11 @@ class FetchNbuDataCommand
         $this->assign_taxonomy_single($post_id, 'coin_mintage_declared', $item['mintage_declared'] ?? null);
         $this->assign_taxonomy_single($post_id, 'coin_mintage_actual',   $item['mintage_actual'] ?? null);
 
-        // NBU category (ієрархія або просто строка)
-        $this->assign_taxonomy_hierarchical($post_id, 'coin_nbu_category', $item['nbu_category'] ?? null);
-
         // Пакування — визначаємо за назвою монети
         $packaging = $this->detect_packaging($item['title'] ?? '');
         $this->assign_taxonomy_single($post_id, 'coin_packaging', $packaging);
+
+        $this->assign_taxonomy_single($post_id, 'coin_color', 'Некольорова');
 
         // ✅ 2) Designers -> separate post type
         $designer_names = $this->parse_designers($item['designers'] ?? null);

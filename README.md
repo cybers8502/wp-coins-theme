@@ -59,7 +59,6 @@ wp nbu parse-souvenir --pages=1 --dry-run
 | Mintage actual | `coin_mintage_actual` | flat |
 | Color | `coin_color` | flat |
 | Packaging | `coin_packaging` | flat |
-| NBU Category | `coin_nbu_category` | hierarchical |
 
 ACF-поля: `issue_date`, `diameter_mm`, `mintage_declared`, `mintage_actual`, `booklet_url`, `description_html`, `designers` (relationship), `images_gallery`
 
@@ -107,7 +106,6 @@ ACF-поля: `user_id`, `coin_id`, `quantity`, `purchase_price`
 | `coin_color` | int\|list | — | Term ID |
 | `coin_packaging` | int\|list | — | Term ID |
 | `coin_denomination` | int\|list | — | Term ID |
-| `coin_nbu_category` | int\|list | — | Term ID |
 
 **Відповідь `/coins`:**
 ```json

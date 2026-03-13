@@ -19,7 +19,6 @@ class CoinController
         'coin_mintage_actual',
         'coin_color',
         'coin_packaging',
-        'coin_nbu_category',
     ];
 
     // GET /coins

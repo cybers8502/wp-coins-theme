@@ -110,12 +110,6 @@ class CoinPostTypeRegistrar
                 'graphql_single_name' => 'coinPackaging',
                 'graphql_plural_name' => 'coinPackagings',
             ],
-            'coin_nbu_category' => [
-                'label'               => 'NBU Category',
-                'hierarchical'        => true,
-                'graphql_single_name' => 'coinNbuCategory',
-                'graphql_plural_name' => 'coinNbuCategories',
-            ],
         ];
 
         foreach ($taxonomies as $slug => $config) {
