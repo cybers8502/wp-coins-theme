@@ -110,6 +110,12 @@ class CoinPostTypeRegistrar
                 'graphql_single_name' => 'coinPackaging',
                 'graphql_plural_name' => 'coinPackagings',
             ],
+            'coin_type' => [
+                'label'               => 'Type',
+                'hierarchical'        => false,
+                'graphql_single_name' => 'coinType',
+                'graphql_plural_name' => 'coinTypes',
+            ],
         ];
 
         foreach ($taxonomies as $slug => $config) {
@@ -130,6 +136,12 @@ class CoinPostTypeRegistrar
     public function seedFixedTerms(): void
     {
         $terms = [
+            'coin_type' => [
+                'Монета',
+                'Банкнота',
+                'Сувенір',
+                'Медаль',
+            ],
             'coin_color' => [
                 'Кольорова',
                 'Некольорова',

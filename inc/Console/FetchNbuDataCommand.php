@@ -232,9 +232,11 @@ class FetchNbuDataCommand
 
         $items = [];
         foreach ($nodes as $node) {
+            $raw_title = $this->xp_text($xp, ".//div[contains(@class,'title')]", $node);
             $item = [
                 'series'        => $this->xp_text($xp, ".//div[contains(@class,'tag')]", $node),
-                'title'         => $this->xp_text($xp, ".//div[contains(@class,'title')]", $node),
+                'title'         => $this->strip_metal_mark($raw_title),
+                'nbu_title'     => $raw_title,
                 'denomination'  => $this->extract_mark($xp, $node, 'Номінал:'),
                 'issue_date'    => $this->normalize_date_ua( $this->extract_mark($xp, $node, 'Дата введення в обіг:') ),
                 'material'      => $this->extract_mark($xp, $node, 'Матеріал:'),
@@ -389,6 +391,10 @@ class FetchNbuDataCommand
         $this->assign_taxonomy_single($post_id, 'coin_mintage_declared', $item['mintage_declared'] ?? null);
         $this->assign_taxonomy_single($post_id, 'coin_mintage_actual',   $item['mintage_actual'] ?? null);
 
+        // Тип — монета чи банкнота
+        $type = $this->detect_type($item['title'] ?? '');
+        $this->assign_taxonomy_single($post_id, 'coin_type', $type);
+
         // Пакування — визначаємо за назвою монети
         $packaging = $this->detect_packaging($item['title'] ?? '');
         $this->assign_taxonomy_single($post_id, 'coin_packaging', $packaging);
@@ -404,6 +410,7 @@ class FetchNbuDataCommand
         // ✅ 3) meta лишається тільки для "даних", а не фасетів
         update_post_meta($post_id, 'issue_date', $item['issue_date'] ?? '');
         update_post_meta($post_id, 'booklet_url', $item['booklet_url'] ?? '');
+        update_post_meta($post_id, 'nbu_title', $item['nbu_title'] ?? '');
 
         if (isset($item['mintage_declared'])) update_post_meta($post_id, 'mintage_declared', $item['mintage_declared']);
         if (isset($item['mintage_actual']))   update_post_meta($post_id, 'mintage_actual', $item['mintage_actual']);
@@ -615,6 +622,27 @@ class FetchNbuDataCommand
 
         $term_id = $this->ensure_term($taxonomy, $value);
         if ($term_id) wp_set_post_terms($post_id, [$term_id], $taxonomy, false);
+    }
+
+    protected function strip_metal_mark(?string $title): ?string
+    {
+        if ($title === null) return null;
+        // Прибираємо позначки типу металу в кінці назви: (с), (н), (бм), (з) тощо
+        return trim(preg_replace('~\s*\([а-яіїєґa-z]{1,4}\)\s*$~iu', '', $title));
+    }
+
+    protected function detect_type(string $title): string
+    {
+        if (mb_stripos($title, 'сувенір') !== false) {
+            return 'Сувенір';
+        }
+        if (mb_stripos($title, 'банкнот') !== false) {
+            return 'Банкнота';
+        }
+        if (mb_stripos($title, 'медал') !== false) {
+            return 'Медаль';
+        }
+        return 'Монета';
     }
 
     protected function detect_packaging(string $title): string
