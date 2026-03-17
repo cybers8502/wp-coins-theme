@@ -37,7 +37,7 @@ class CoinPostTypeRegistrar
             'has_archive'         => false,
             'exclude_from_search' => true,
             'publicly_queryable'  => true,
-            'taxonomies'          => ['category'],
+            'taxonomies'          => [],
             'show_in_rest'        => true,
             'show_in_graphql'     => true,
             'graphql_single_name' => 'coin',
