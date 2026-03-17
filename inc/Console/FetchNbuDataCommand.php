@@ -352,6 +352,10 @@ class FetchNbuDataCommand
             'post_title'  => $title,
             'post_content'=> $item['description_html'] ?? '',
         ];
+        if (!empty($item['issue_date'])) {
+            $postarr['post_date']     = $item['issue_date'] . ' 00:00:00';
+            $postarr['post_date_gmt'] = get_gmt_from_date($item['issue_date'] . ' 00:00:00');
+        }
         $post_id = wp_insert_post($postarr);
         if (is_wp_error($post_id)) {
             WP_CLI::error('Не вдалось створити пост: ' . $post_id->get_error_message());
@@ -361,11 +365,16 @@ class FetchNbuDataCommand
     }
 
     protected function update_post_and_meta(int $post_id, array $item): void {
-        wp_update_post([
+        $postarr = [
             'ID'           => $post_id,
             'post_title'   => $item['title'] ?? get_the_title($post_id),
             'post_content' => $item['description_html'] ?? get_post_field('post_content', $post_id),
-        ]);
+        ];
+        if (!empty($item['issue_date'])) {
+            $postarr['post_date']     = $item['issue_date'] . ' 00:00:00';
+            $postarr['post_date_gmt'] = get_gmt_from_date($item['issue_date'] . ' 00:00:00');
+        }
+        wp_update_post($postarr);
         $this->fill_meta_acf($post_id, $item);
     }
 
