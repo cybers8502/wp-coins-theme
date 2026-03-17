@@ -40,6 +40,16 @@ class CoinACFFieldsManager
     {
         return [
             [
+                'key'          => 'field_coin_nbu_title',
+                'label'        => 'NBU title',
+                'name'         => 'nbu_title',
+                'type'         => 'text',
+                'instructions' => 'Оригінальна назва з сайту НБУ (з позначкою металу).',
+                'required'     => 0,
+                'readonly'     => 1,
+                'wrapper'      => ['width' => '100'],
+            ],
+            [
                 'key' => 'field_coin_issue_date',
                 'label' => 'Issue date',
                 'name' => 'issue_date',
