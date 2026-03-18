@@ -39,9 +39,9 @@ The `FetchNbuDataCommand` is only registered when `WP_CLI` is defined (see `func
 
 **CPT `coins`** with taxonomies:
 - `coin_denomination`, `coin_quality`, `coin_material`, `coin_series`, `coin_edge`, `coin_diameter`, `coin_mintage_declared`, `coin_mintage_actual`
-- `coin_color`, `coin_packaging`
+- `coin_color`, `coin_packaging`, `coin_type`
 
-**ACF fields on `coins`:** `issue_date`, `diameter_mm`, `quality`, `edge`, `designers` (relationship to `designer` CPT), `mintage_declared`, `mintage_actual`, `booklet_url`, `description_html`, `images_gallery`
+**ACF fields on `coins`:** `issue_date`, `diameter_mm`, `quality`, `edge`, `designers` (relationship to `designer` CPT), `mintage_declared`, `mintage_actual`, `booklet_url`, `description_html` (wysiwyg), `images_gallery`
 
 **CPT `designer`** — linked from coins via ACF relationship field (`designers`). ACF fields: `full_name`, `note`.
 

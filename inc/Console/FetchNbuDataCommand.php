@@ -642,6 +642,9 @@ class FetchNbuDataCommand
         if (mb_stripos($title, 'медал') !== false) {
             return 'Медаль';
         }
+        if (mb_stripos($title, 'інвестиційн') !== false) {
+            return 'Інвестиційна';
+        }
         return 'Монета';
     }
 

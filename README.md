@@ -59,11 +59,13 @@ wp nbu parse-souvenir --pages=1 --dry-run
 | Mintage actual | `coin_mintage_actual` | flat |
 | Color | `coin_color` | flat |
 | Packaging | `coin_packaging` | flat |
+| Type | `coin_type` | flat |
 
-ACF-поля: `issue_date`, `diameter_mm`, `mintage_declared`, `mintage_actual`, `booklet_url`, `description_html`, `designers` (relationship), `images_gallery`
+ACF-поля: `issue_date`, `diameter_mm`, `mintage_declared`, `mintage_actual`, `booklet_url`, `description_html` (wysiwyg), `designers` (relationship), `images_gallery`
 
 Фіксовані терміни `coin_color`: `Кольорова`, `Некольорова`
 Фіксовані терміни `coin_packaging`: `Без пакування`, `В сувенірному пакуванні`, `Набір`, `Ролик`
+Фіксовані терміни `coin_type`: `Монета`, `Банкнота`, `Сувенір`, `Медаль`, `Інвестиційна`
 
 ### CPT `designer`
 
@@ -191,6 +193,7 @@ query {
       coinMaterials { nodes { name } }
       coinPackagings { nodes { name } }
       coinColors { nodes { name } }
+      coinTypes { nodes { name } }
     }
   }
 }

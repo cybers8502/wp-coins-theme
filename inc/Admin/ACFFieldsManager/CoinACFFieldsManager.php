@@ -7,6 +7,16 @@ class CoinACFFieldsManager
     public function boot(): void
     {
         add_action('acf/init', [$this, 'register']);
+        add_action('graphql_register_types', [$this, 'registerGraphqlFields']);
+    }
+
+    public function registerGraphqlFields(): void
+    {
+        register_graphql_field('Coin', 'nbuTitle', [
+            'type'        => 'String',
+            'description' => 'Оригінальна назва з сайту НБУ (з позначкою металу)',
+            'resolve'     => fn($post) => get_post_meta($post->databaseId, 'nbu_title', true) ?: null,
+        ]);
     }
 
     public function register(): void
@@ -40,14 +50,16 @@ class CoinACFFieldsManager
     {
         return [
             [
-                'key'          => 'field_coin_nbu_title',
-                'label'        => 'NBU title',
-                'name'         => 'nbu_title',
-                'type'         => 'text',
-                'instructions' => 'Оригінальна назва з сайту НБУ (з позначкою металу).',
-                'required'     => 0,
-                'readonly'     => 1,
-                'wrapper'      => ['width' => '100'],
+                'key'                => 'field_coin_nbu_title',
+                'label'              => 'NBU title',
+                'name'               => 'nbu_title',
+                'type'               => 'text',
+                'instructions'       => 'Оригінальна назва з сайту НБУ (з позначкою металу).',
+                'required'           => 0,
+                'readonly'           => 1,
+                'wrapper'            => ['width' => '100'],
+                'show_in_graphql'    => 1,
+                'graphql_field_name' => 'nbuTitle',
             ],
             [
                 'key' => 'field_coin_issue_date',
@@ -182,6 +194,21 @@ class CoinACFFieldsManager
                 'wrapper' => ['width' => '50'],
             ],
             [
+                'key'           => 'field_coin_type_tax',
+                'label'         => 'Type',
+                'name'          => 'coin_type',
+                'type'          => 'taxonomy',
+                'taxonomy'      => 'coin_type',
+                'field_type'    => 'select',
+                'allow_null'    => 1,
+                'add_term'      => 0,
+                'save_terms'    => 1,
+                'load_terms'    => 1,
+                'return_format' => 'id',
+                'multiple'      => 0,
+                'wrapper'       => ['width' => '50'],
+            ],
+            [
                 'key'           => 'field_coin_color_tax',
                 'label'         => 'Color',
                 'name'          => 'coin_color',
@@ -237,11 +264,14 @@ class CoinACFFieldsManager
                 'key' => 'field_coin_description_html',
                 'label' => 'Description (HTML)',
                 'name' => 'description_html',
-                'type' => 'textarea',
+                'type' => 'wysiwyg',
                 'instructions' => 'HTML-опис з НБУ (зберігаємо як є).',
                 'required' => 0,
-                'new_lines' => '',
-                'rows' => 8,
+                'default_value' => '',
+                'tabs' => 'all',
+                'toolbar' => 'full',
+                'media_upload' => 0,
+                'delay' => 0,
             ],
             [
                 'key' => 'field_coin_images_gallery',
